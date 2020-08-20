@@ -1,0 +1,264 @@
+---
+apiVersion: hnc.x-k8s.io/v1alpha1
+kind: HNCConfiguration
+metadata:
+  name: config
+spec:
+  types:
+  - apiVersion: rbac.authorization.k8s.io/v1
+    kind: Role
+    mode: propagate
+  - apiVersion: rbac.authorization.k8s.io/v1
+    kind: RoleBinding
+    mode: propagate
+  - apiVersion: v1
+    kind: LimitRange
+    mode: propagate
+  - apiVersion: v1
+    kind: ResourceQuota
+    mode: propagate
+  - apiVersion: networking.k8s.io/v1
+    kind: NetworkPolicy
+    mode: propagate
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: self-provision
+spec: {}
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  namespace: self-provision
+  name: self-provision
+rules:
+- apiGroups: ["hnc.x-k8s.io/v1alpha1"]
+  resources: ["subnamespaceanchors"]
+  verbs: ["*"]
+---
+kind: NetworkPolicy
+apiVersion: networking.k8s.io/v1
+metadata:
+  namespace: self-provision
+  name: deny-from-other-namespaces
+spec:
+  podSelector:
+    matchLabels:
+  ingress:
+  - from:
+    - podSelector: {}
+---
+apiVersion: hnc.x-k8s.io/v1alpha1
+kind: HierarchyConfiguration
+metadata:
+  name: hierarchy
+  namespace: self-provision
+spec: {}
+---
+apiVersion: hnc.x-k8s.io/v1alpha1
+kind: SubnamespaceAnchor
+metadata:
+  name: size-s
+  namespace: self-provision
+---
+apiVersion: hnc.x-k8s.io/v1alpha1
+kind: SubnamespaceAnchor
+metadata:
+  name: size-m
+  namespace: self-provision
+---
+apiVersion: hnc.x-k8s.io/v1alpha1
+kind: SubnamespaceAnchor
+metadata:
+  name: size-l
+  namespace: self-provision
+---
+apiVersion: hnc.x-k8s.io/v1alpha1
+kind: HierarchyConfiguration
+metadata:
+  name: hierarchy
+  namespace: size-s
+spec:
+  parent: self-provision
+---
+apiVersion: hnc.x-k8s.io/v1alpha1
+kind: HierarchyConfiguration
+metadata:
+  name: hierarchy
+  namespace: size-m
+spec:
+  parent: self-provision
+---
+apiVersion: hnc.x-k8s.io/v1alpha1
+kind: HierarchyConfiguration
+metadata:
+  name: hierarchy
+  namespace: size-l
+spec:
+  parent: self-provision
+---
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: default
+  namespace: size-s
+spec:
+  limits:
+  - default:
+      cpu: 0.1
+      memory: 64M
+    defaultRequest:
+      cpu: 0.1
+      memory: 64M
+    type: Container
+---
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: default
+  namespace: size-m
+spec:
+  limits:
+  - default:
+      cpu: 0.5
+      memory: 256M
+    defaultRequest:
+      cpu: 0.5
+      memory: 256M
+    type: Container
+---
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: default
+  namespace: size-l
+spec:
+  limits:
+  - default:
+      cpu: 1
+      memory: 512M
+    defaultRequest:
+      cpu: 1
+      memory: 512M
+    type: Container
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: default
+  namespace: size-s
+spec:
+  hard:
+    requests.cpu: 1
+    requests.memory: 1G
+    limits.cpu: 1
+    limits.memory: 1G
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: default
+  namespace: size-m
+spec:
+  hard:
+    requests.cpu: 4
+    requests.memory: 4G
+    limits.cpu: 4
+    limits.memory: 4G
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: default
+  namespace: size-l
+spec:
+  hard:
+    requests.cpu: 8
+    requests.memory: 16G
+    limits.cpu: 8
+    limits.memory: 16G
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: default
+  namespace: size-s
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-admin
+subjects:
+- kind: Group
+  name: front
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: default-self-provision
+  namespace: size-s
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: self-provision
+subjects:
+- kind: Group
+  name: front
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: default
+  namespace: size-m
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-admin
+subjects:
+- kind: Group
+  name: backend
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: default-self-provision
+  namespace: size-m
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: self-provision
+subjects:
+- kind: Group
+  name: backend
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: default
+  namespace: size-l
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: cluster-admin
+subjects:
+- kind: Group
+  name: mlops
+  apiGroup: rbac.authorization.k8s.io
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: RoleBinding
+metadata:
+  name: default-self-provision
+  namespace: size-l
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: Role
+  name: self-provision
+subjects:
+- kind: Group
+  name: mlops
+  apiGroup: rbac.authorization.k8s.io

@@ -6,7 +6,7 @@ The repository contains some examples of HNC use cases.
 
 > Hierarchical namespaces make it easier to share your cluster by making namespaces more powerful. For example, you can
 > create additional namespaces under your team's namespace, even if you don't have cluster-level permission to create
-> namespaces, and easily apply policies like RBAC and Network Policies across all namespaces in your team
+> namespaces. Then easily apply policies like RBAC and Network Policies across all namespaces in your team
 > (e.g. a set of related microservices).
 
 *Source: [multi-tenancy sig repository](https://github.com/kubernetes-sigs/multi-tenancy/tree/hnc-v0.5.1/incubator/hnc)*
@@ -78,7 +78,7 @@ Available Commands:
   tree        Display one or more hierarchy trees
 ```
 
-### Cluster-Admin
+### cluster-admin
 
 I've seen some issues with the pre-configured permissions given to the controller.
 So I've opted to grant cluster-admin to the service account assigned to this controller.
@@ -87,17 +87,16 @@ So I've opted to grant cluster-admin to the service account assigned to this con
 $ kubectl create clusterrolebinding hnc-cluster-admin --clusterrole=cluster-admin  --serviceaccount=hnc-system:default
 ```
 
-This should be improved in the near future.
+It should be improved shortly.
 
 ## Use cases
 
 ### Namespace Self Provisioning
 
-One of the use cases this controller enables is the ability to define namespace templates as a
-cluster administrator, users does not need to have any cluster level permissions to provision a new ready to use
-namespace.
+One of the use cases this controller enables is defining namespace templates as a cluster administrator. Users do not
+need to have any cluster-level permissions to provision a new namespace ready to use.
 
-[Click here to continue reading about this use case](use-cases/self-provision)
+[Click here to continue reading about this use case.](use-cases/self-provision)
 
 ### Application templates
 
@@ -107,8 +106,8 @@ Imagine you are building an application with a common pattern:
 - Backend
 - DB
 
-If you are involved in the development of a new **frontend** feature, you could be benefict of having a stable backend
-templated to being able to test your changes in a stable and isolated environment *(reproducible)*.
+Suppose you are involved in the development of a new frontend feature. In that case, you could benefit from having a
+well-built backend templated to test your changes in a stable and isolated environment (reproducible).
 
 [Click here to continue reading about this use case](use-cases/application-template)
 
@@ -116,5 +115,4 @@ templated to being able to test your changes in a stable and isolated environmen
 
 [License :bookmark_tabs:](LICENSE)
 
-OSS baked with :heart: at [SIGHUP](https://sighup.io).
-
+:shipit: **OSS** :nut_and_bolt: :wrench: :hammer: with :heart: from [SIGHUP](https://sighup.io).
