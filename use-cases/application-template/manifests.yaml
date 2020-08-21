@@ -1,0 +1,204 @@
+---
+apiVersion: hnc.x-k8s.io/v1alpha1
+kind: HNCConfiguration
+metadata:
+  name: config
+spec:
+  types:
+  - apiVersion: rbac.authorization.k8s.io/v1
+    kind: Role
+    mode: propagate
+  - apiVersion: rbac.authorization.k8s.io/v1
+    kind: RoleBinding
+    mode: propagate
+  - apiVersion: apps/v1
+    kind: Deployment
+    mode: propagate
+  - apiVersion: v1
+    kind: Service
+    mode: propagate
+  - apiVersion: v1
+    kind: Secret
+    mode: propagate
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: apps
+spec: {}
+---
+apiVersion: hnc.x-k8s.io/v1alpha1
+kind: HierarchyConfiguration
+metadata:
+  name: hierarchy
+  namespace: apps
+spec: {}
+---
+# Shared across apps docker registry credentials
+apiVersion: v1
+kind: Secret
+metadata:
+  name: my-registry-creds
+  namespace: apps
+type: kubernetes.io/dockerconfigjson
+data:
+  .dockerconfigjson: eyJhdXRocyI6eyJteS1jb3JwLWRvY2tlci1yZWdpc3RyeS5pbnRlcm5hbCI6eyJ1c2VybmFtZSI6Im15LXVzZXIiLCJwYXNzd29yZCI6Im15LXBhc3MiLCJhdXRoIjoiYlhrdGRYTmxjanB0ZVMxd1lYTnoifX19
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: Role
+metadata:
+  namespace: apps
+  name: self-provision
+rules:
+- apiGroups: ["hnc.x-k8s.io/v1alpha1"]
+  resources: ["subnamespaceanchors"]
+  verbs: ["*"]
+---
+apiVersion: hnc.x-k8s.io/v1alpha1
+kind: SubnamespaceAnchor
+metadata:
+  name: guestbook
+  namespace: apps
+---
+apiVersion: hnc.x-k8s.io/v1alpha1
+kind: HierarchyConfiguration
+metadata:
+  name: hierarchy
+  namespace: guestbook
+spec:
+  parent: apps
+---
+# INIT: APP BASE
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: guestbook
+    tier: frontend
+  name: frontend
+  namespace: guestbook
+spec:
+  ports:
+  - port: 80
+  selector:
+    app: guestbook
+    tier: frontend
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: redis
+    role: master
+    tier: backend
+  name: redis-master
+  namespace: guestbook
+spec:
+  ports:
+  - port: 6379
+    targetPort: 6379
+  selector:
+    app: redis
+    role: master
+    tier: backend
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app: redis
+    role: slave
+    tier: backend
+  name: redis-slave
+  namespace: guestbook
+spec:
+  ports:
+  - port: 6379
+  selector:
+    app: redis
+    role: slave
+    tier: backend
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis-master
+  namespace: guestbook
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: redis
+      role: master
+      tier: backend
+  template:
+    metadata:
+      labels:
+        app: redis
+        role: master
+        tier: backend
+    spec:
+      containers:
+      - image: k8s.gcr.io/redis:e2e
+        name: master
+        ports:
+        - containerPort: 6379
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: redis-slave
+  namespace: guestbook
+spec:
+  replicas: 2
+  selector:
+    matchLabels:
+      app: redis
+      role: slave
+      tier: backend
+  template:
+    metadata:
+      labels:
+        app: redis
+        role: slave
+        tier: backend
+    spec:
+      containers:
+      - env:
+        - name: GET_HOSTS_FROM
+          value: dns
+        image: gcr.io/rmlite-playground/guestbook-redis-slave:v1.0.0
+        name: slave
+        ports:
+        - containerPort: 6379
+---
+# END: APP BASE
+---
+apiVersion: hnc.x-k8s.io/v1alpha1
+kind: SubnamespaceAnchor
+metadata:
+  name: guestbook-v1
+  namespace: guestbook
+---
+apiVersion: hnc.x-k8s.io/v1alpha1
+kind: HierarchyConfiguration
+metadata:
+  name: hierarchy
+  namespace: guestbook-v1
+spec:
+  parent: guestbook
+---
+apiVersion: hnc.x-k8s.io/v1alpha1
+kind: SubnamespaceAnchor
+metadata:
+  name: guestbook-v2
+  namespace: guestbook
+---
+apiVersion: hnc.x-k8s.io/v1alpha1
+kind: HierarchyConfiguration
+metadata:
+  name: hierarchy
+  namespace: guestbook-v2
+spec:
+  parent: guestbook

@@ -16,14 +16,14 @@ The repository contains some examples of HNC use cases.
 You will need:
 
 - [docker](https://www.docker.com/).
-- [kind](https://github.com/kubernetes-sigs/kind/releases/tag/v0.8.1): Kubernetes in docker
+- [kind](https://github.com/kubernetes-sigs/kind/releases/tag/v0.8.1): Kubernetes in docker.
   - `kubectl`.
 - OS tools like `curl`, `make`, `git`.
 - [direnv](https://direnv.net/): direnv is an extension for your shell. It augments existing shells with a new feature
 that can load and unload environment variables depending on the current directory.
-- golang
+- golang.
 
-There are two ways to spin up the HNC, if you are running linux:
+There are two ways to spin up the HNC if you are running Linux:
 
 ```bash
 $ kind create cluster
@@ -36,8 +36,8 @@ $ chmod +x ./kubectl-hns
 $ export PATH=${PWD}:${PATH}
 ```
 
-In the other hand while running MacOS you have to compile your own `hns` kubectl plugin.
-*(It is also compatible while running linux)*
+On the other hand, while running macOS, you have to compile your own `hns` kubectl plugin.
+*(It is also compatible while running Linux)*
 
 ```bash
 $ HNC_VERSION=v0.5.1
@@ -85,6 +85,9 @@ So I've opted to grant cluster-admin to the service account assigned to this con
 
 ```bash
 $ kubectl create clusterrolebinding hnc-cluster-admin --clusterrole=cluster-admin  --serviceaccount=hnc-system:default
+clusterrolebinding.rbac.authorization.k8s.io/hnc-cluster-admin created
+$ kubectl rollout restart deploy/hnc-controller-manager -n hnc-system
+deployment.apps/hnc-controller-manager restarted
 ```
 
 It should be improved shortly.
